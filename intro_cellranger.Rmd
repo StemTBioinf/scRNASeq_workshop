@@ -182,7 +182,10 @@ barcodes.tsv.gz  features.tsv.gz  matrix.mtx.gz
 ## Install Seurat
 install.packages("devtools")
 require("devtools")
+
 install.packages('Seurat')
-library(Seurat)
+install.packages("ggplot2")
+source("http://bioconductor.org/biocLite.R")
+biocLite('topGO')
 
 

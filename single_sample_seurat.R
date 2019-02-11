@@ -111,8 +111,7 @@ ggplot(neuro.v2@meta.data, aes(x=nUMI, y=nGene)) + geom_point(aes(color=wierd))
 ggplot(neuro.v2@meta.data, aes(x=percent.mito, y=nGene)) + geom_point(aes(color=wierd))
 ggplot(neuro.v2@meta.data, aes(x=percent.ribo, y=nGene)) + geom_point(aes(color=wierd))
 
-remw.neuro.v2 <- SubsetData(neuro.v2, cells.use = rownames(neuro.v2@meta.data[!wierd.cells, ]))
-remw.neuro.v2
+neuro.v2 <- SubsetData(neuro.v2, cells.use = rownames(neuro.v2@meta.data[!wierd.cells, ]))
 neuro.v2
 
 #--------------------------------------------------------------------------------------
@@ -195,12 +194,118 @@ ggplot(neuro.v2@meta.data, aes(x=S.Score, y=G2M.Score)) + geom_point(aes(color=C
 #--------------------------------------------------------------------------------------
 # Data Scaling
 
-pbmc <- ScaleData(object = neuro.v2, vars.to.regress = c("nGene"))
-#pbmc <- ScaleData(object = neuro.v2, vars.to.regress = c("nGene", "S.Score", "G2M.Score"))
-#pbmc <- ScaleData(object = neuro.v2, vars.to.regress = c("nGene", "S.Score", "G2M.Score"))
-pbmc <- ScaleData(object = neuro.v2, vars.to.regress = c("nGene"))
+neuro.v2 <- ScaleData(object = neuro.v2, vars.to.regress = c("nGene"))
+#neuro.v2 <- ScaleData(object = neuro.v2, vars.to.regress = c("nGene", "CC.Difference"))
+#neuro.v2 <- ScaleData(object = neuro.v2, vars.to.regress = c("nGene", "S.Score", "G2M.Score"))
 
+#--------------------------------------------------------------------------------------
+# PCA
 
+neuro.v2 <- RunPCA(object = neuro.v2, pc.genes = neuro.v2@var.genes,
+                   do.print = TRUE, pcs.print = 1:5,genes.print = 5)
+PrintPCA(object = neuro.v2, pcs.print = 1:1, genes.print = 10)
+PrintPCA(object = neuro.v2, pcs.print = 2:2, genes.print = 10)
 
+VizPCA(object = neuro.v2, pcs.use = 1:2)
 
+PCAPlot(object = neuro.v2, dim.1 = 1, dim.2 = 2)
 
+head(neuro.v2@dr$pca@cell.embeddings)
+neuro.v2@meta.data['PC1'] = neuro.v2@dr$pca@cell.embeddings[, 1]
+neuro.v2@meta.data['PC2'] = neuro.v2@dr$pca@cell.embeddings[, 2]
+
+head(neuro.v2@meta.data)
+
+ggplot(neuro.v2@meta.data, aes(x=PC1, y=PC2)) + geom_point(aes(color=Phase))
+ggplot(neuro.v2@meta.data, aes(x=PC1, y=PC2)) + geom_point(aes(color=CC.Difference)) + scale_colour_gradient2()
+
+ggplot(neuro.v2@meta.data, aes(x=PC1, y=PC2)) + geom_point(aes(color=wierd))
+
+#--------------------------------------------------------------------------------------
+# PCA, component selection: tradeoff between sensitivity and noise
+
+PCHeatmap(object = neuro.v2, pc.use = 1, cells.use = 500, do.balanced = TRUE, label.columns = FALSE)
+PCHeatmap(object = neuro.v2, pc.use = 1:12, cells.use = 500, do.balanced = TRUE, 
+          label.columns = FALSE, use.full = FALSE)
+
+PCElbowPlot(object = neuro.v2)
+
+#--------------------------------------------------------------------------------------
+# Nonlinear dimensionality reduction: tSNE
+
+neuro.v2 <- RunTSNE(object = neuro.v2, dims.use = 1:15, do.fast = TRUE)
+TSNEPlot(object = neuro.v2)
+
+head(neuro.v2@dr$tsne@cell.embeddings)
+neuro.v2@meta.data['tSNE1'] = neuro.v2@dr$tsne@cell.embeddings[, 1]
+neuro.v2@meta.data['tSNE2'] = neuro.v2@dr$tsne@cell.embeddings[, 2]
+
+head(neuro.v2@meta.data)
+ggplot(neuro.v2@meta.data, aes(x=tSNE1, y=tSNE2)) + geom_point(aes(color=Phase))
+ggplot(neuro.v2@meta.data, aes(x=tSNE1, y=tSNE2)) + geom_point(aes(color=wierd))
+ggplot(neuro.v2@meta.data, aes(x=tSNE1, y=tSNE2)) + geom_point(aes(color= nGene))
+
+#--------------------------------------------------------------------------------------
+# Nonlinear dimensionality reduction: UMAP
+
+neuro.v2 <- RunUMAP(object = neuro.v2, reduction.use='pca', dims.use = 1:15)
+DimPlot(object = neuro.v2, reduction.use = 'umap')
+
+neuro.v2 <- RunUMAP(object = neuro.v2, reduction.use='pca', dims.use = 1:15,
+                    min_dist = 0.01, n_neighbors = 30)
+DimPlot(object = neuro.v2, reduction.use = 'umap')
+
+head(neuro.v2@dr$umap@cell.embeddings)
+neuro.v2@meta.data['UMAP1'] = neuro.v2@dr$umap@cell.embeddings[, 1]
+neuro.v2@meta.data['UMAP2'] = neuro.v2@dr$umap@cell.embeddings[, 2]
+
+head(neuro.v2@meta.data)
+ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color=Phase))
+ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color=wierd))
+ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color= nGene))
+
+#--------------------------------------------------------------------------------------
+# Clustering cells
+
+neuro.v2 <- FindClusters(object = neuro.v2, reduction.type = "pca", dims.use = 1:15, 
+                         print.output = 0, force.recalc = TRUE)
+head(neuro.v2@meta.data)
+ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color=res.0.8))
+
+neuro.v2 <- FindClusters(object = neuro.v2, reduction.type = "pca", dims.use = 1:15, 
+                         resolution = 0.1, print.output = 0,  force.recalc = TRUE)
+ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color=res.0.1))
+
+neuro.v2 <- FindClusters(object = neuro.v2, reduction.type = "pca", dims.use = 1:15, 
+                         resolution = 1.2, print.output = 0,  force.recalc = TRUE)
+ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color=res.1.2))
+
+head(neuro.v2@meta.data)
+
+neuro.v2@meta.data$res.0.8 <- as.character(as.numeric(neuro.v2@meta.data$res.0.8) + 1)
+ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color=res.0.8))
+ggplot(neuro.v2@meta.data, aes(res.0.8)) + geom_bar()
+
+BuildClusterTree(neuro.v2, pcs.use = 1:15)
+
+WhichCells(neuro.v2, 2)
+
+#--------------------------------------------------------------------------------------
+# Marker gene identfication
+
+neuro.v2 <- SetIdent(neuro.v2, ident.use=neuro.v2@meta.data$res.0.8)
+
+markers <- FindAllMarkers(object = neuro.v2, only.pos = TRUE, min.pct = 0.25, 
+                          logfc.threshold = 0.25, test.use = "wilcox")
+nrow(markers)
+table(markers$cluster)
+
+head(markers)
+top10 <- markers %>% group_by(cluster) %>% top_n(10, avg_logFC)
+DoHeatmap(object = neuro.v2, genes.use = top10$gene, slim.col.label = TRUE, remove.key = TRUE)
+
+genes.viz = c('Nrxn3', 'Dbi', 'Gng11', 'Pclaf')
+VlnPlot(neuro.v2, genes.viz, nCol = 2)
+FeaturePlot(neuro.v2, genes.viz, pt.size = 1, no.axes = TRUE, nCol = 2)
+
+saveRDS(neuro.v2, file = "neuro.v2.rds")
