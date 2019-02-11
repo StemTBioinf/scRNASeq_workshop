@@ -127,7 +127,7 @@ neuro.v2 <- FindVariableGenes(object = neuro.v2, mean.function = ExpMean, disper
                               x.low.cutoff = 0.0125, x.high.cutoff = 3, y.cutoff = 0.5)
 length(x = neuro.v2@var.genes)
 neuro.v2 <- FindVariableGenes(object = neuro.v2, mean.function = ExpMean, dispersion.function = LogVMR, 
-                              x.low.cutoff = 0.1, x.high.cutoff = 2, y.cutoff = 1)
+                              x.low.cutoff = 0.05, x.high.cutoff = 2, y.cutoff = 0.5)
 length(x = neuro.v2@var.genes)
 
 #--------------------------------------------------------------------------------------
@@ -286,14 +286,14 @@ neuro.v2@meta.data$res.0.8 <- as.character(as.numeric(neuro.v2@meta.data$res.0.8
 ggplot(neuro.v2@meta.data, aes(x=UMAP1, y=UMAP2)) + geom_point(aes(color=res.0.8))
 ggplot(neuro.v2@meta.data, aes(res.0.8)) + geom_bar()
 
+neuro.v2 <- SetIdent(neuro.v2, ident.use=neuro.v2@meta.data$res.0.8)
+
 BuildClusterTree(neuro.v2, pcs.use = 1:15)
 
 WhichCells(neuro.v2, 2)
 
 #--------------------------------------------------------------------------------------
-# Marker gene identfication
-
-neuro.v2 <- SetIdent(neuro.v2, ident.use=neuro.v2@meta.data$res.0.8)
+# Marker gene identification
 
 markers <- FindAllMarkers(object = neuro.v2, only.pos = TRUE, min.pct = 0.25, 
                           logfc.threshold = 0.25, test.use = "wilcox")
@@ -308,4 +308,4 @@ genes.viz = c('Nrxn3', 'Dbi', 'Gng11', 'Pclaf')
 VlnPlot(neuro.v2, genes.viz, nCol = 2)
 FeaturePlot(neuro.v2, genes.viz, pt.size = 1, no.axes = TRUE, nCol = 2)
 
-saveRDS(neuro.v2, file = "neuro.v2.rds")
+save(neuro.v2, file = "neuro.v2.Robj")

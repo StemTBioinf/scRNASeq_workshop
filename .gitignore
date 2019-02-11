@@ -1,2 +1,4 @@
-.rds
+*.rds
+*.Robj
+*.Rhistory
 

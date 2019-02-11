@@ -179,13 +179,14 @@ ls count_Sample1/outs/filtered_feature_bc_matrix
 barcodes.tsv.gz  features.tsv.gz  matrix.mtx.gz
 ```
 
-## Install Seurat
-install.packages("devtools")
-require("devtools")
+## Installation of packages required downstream
 
+install.packages("devtools")
 install.packages('Seurat')
 install.packages("ggplot2")
+
 source("http://bioconductor.org/biocLite.R")
 biocLite('topGO')
+biocLite('monocle')
 
 
