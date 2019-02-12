@@ -141,7 +141,7 @@ genes.exclude.idx
 length(genes.exclude.idx)
 gene.names[genes.exclude.idx]
 
-genes.keep <- gene.names[-genes.exclude]
+genes.keep <- gene.names[-genes.exclude.idx]
 length(genes.keep)
 
 cells.keep <- colnames(neuro.v2@data)
@@ -157,7 +157,7 @@ head(neuro.v2@meta.data)
 neuro.v2 <- NormalizeData(object = neuro.v2, normalization.method = "LogNormalize", 
                           scale.factor = 1000)
 neuro.v2 <- FindVariableGenes(object = neuro.v2, mean.function = ExpMean, dispersion.function = LogVMR, 
-                              x.low.cutoff = 0.1, x.high.cutoff = 2, y.cutoff = 1)
+                              x.low.cutoff = 0.05, x.high.cutoff = 2, y.cutoff = 0.5)
 length(x = neuro.v2@var.genes)
 
 #--------------------------------------------------------------------------------------
@@ -249,11 +249,16 @@ ggplot(neuro.v2@meta.data, aes(x=tSNE1, y=tSNE2)) + geom_point(aes(color= nGene)
 # Nonlinear dimensionality reduction: UMAP
 
 neuro.v2 <- RunUMAP(object = neuro.v2, reduction.use='pca', dims.use = 1:15)
+DimPlot(object = neuro.v2, reduction.use = 'umap', n_neighbors = 30)
+
+neuro.v2 <- RunUMAP(object = neuro.v2, reduction.use='pca', dims.use = 1:10,
+                    min_dist = 1, n_neighbors = 30)
 DimPlot(object = neuro.v2, reduction.use = 'umap')
 
 neuro.v2 <- RunUMAP(object = neuro.v2, reduction.use='pca', dims.use = 1:15,
-                    min_dist = 0.01, n_neighbors = 30)
+                    min_dist = 0.1, n_neighbors = 30)
 DimPlot(object = neuro.v2, reduction.use = 'umap')
+
 
 head(neuro.v2@dr$umap@cell.embeddings)
 neuro.v2@meta.data['UMAP1'] = neuro.v2@dr$umap@cell.embeddings[, 1]
